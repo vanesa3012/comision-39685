@@ -1,4 +1,6 @@
 
+import {promises as fs} from "fs"
+
 class Product{
     constructor(title, description, price, thumbnail, code, stock){
         this.title = title
@@ -7,49 +9,95 @@ class Product{
         this.thumbnail = thumbnail
         this.code = code
         this.stock = stock
+        this.id = Product.addId()
+    }
+
+    static addId(){
+        if(this.idIncrement){
+            this.idIncrement++
+        }else{
+            this.idIncrement = 1
+        }
+        return this.idIncrement
+    
     }
 }
 
 
 class ProductManager{
     static newId = 0
-    constructor(){
-        this.products = []
+    constructor(path){
+        this.path = path
     }
     
-    addProduct(newProduct){
-        //Valido que estén todos los campos completos
-        if(Object.values(newProduct).includes(" ") || Object.values(newProduct).includes(null)){
-            console.log("Completar todos los campos")
-        } else{
-            //Valido que no se repita code
-            const sameCode = this.products.find((prod) => prod.code === newProduct.code)
+    // METODOS
+
+    async addProduct(newProduct){       //Valido que estén todos los campos completos
+        try{
+            const read = await fs.readFile(this.path, "utf8")
+            const data = JSON.parse(read)
+            const sameCode = data.find((prod) => prod.code === newProduct.code)
             if(sameCode){
-                console.log(`Código ${sameCode.code} ya existe.`)
+                throw error;
             }else{
-                this.products.push({...newProduct, id: ++ProductManager.newId})
+                if(valid.includes(null)||valid.includes("")||valid.includes(undefined)){
+                    console.log("Todos los campos deben estar completos");
+                }else{
+                    let id;
+                    id = data.length + 1;
+                    let nuevoProducto = new Product(titulo, descripcion, precio, imagen, stock, code, id);
+                    data.push(nuevoProducto);
+                    await fs.writeFile(this.path, JSON.stringify(data), "utf-8");
+
+                }
             }
+        }catch (error){
+            console.log(error);
         }
     }
 
 
-    getProducts(){
-        return this.products
+    async getProducts() {
+        try {
+        const read = await fs.readFile(this.path, "utf8");
+        console.log(JSON.parse(read)); 
+        } catch (error) {
+        throw error;
+        }
     }
 
-    getProductById(id){
-        const buscarProduct = this.products.find(product => product.id === id)
+    async getProductById(id){
+        try{
+            const read = await fs.readFile(this.path, "utf-8");
+            const data = JSON.parse(read);
+            const buscarProduct = data.find((buscarProduct) => buscarProduct.id === id)
         if(buscarProduct){
-            return JSON.stringify(buscarProduct);
+            console.log(buscarProduct)
         }else{
-            console.log("Not Found")
+            console.log("No se encontro el producto")
+        }
+        }catch(error){
+        throw error
+        }   
+    }
+    
+    async deleteProduct(id) {
+        try {
+        const read = await fs.readFile(this.path, "utf-8");
+        const data = JSON.parse(read);
+        const newData = data.filter((product) => product.id !== id);
+        await fs.writeFile(this.path, JSON.stringify(newData), "utf-8");
+        return console.log("Producto eliminado");
+        } catch (error) {
+        throw error;
         }
     }
+
 }
 
-const producto1 = new ProductManager()
+const producto1 = new ProductManager("./productos.json")
 
-console.log(producto1)
+/*console.log(producto1)
 
 //agrego un producto con todos los campos completos
 producto1.addProduct({
@@ -92,7 +140,7 @@ producto1.addProduct({
     stock: 15
 })
 
-console.log(producto1)
+console.log(producto1)*/
 
 producto1.getProductById(1)
 producto1.getProductById(2)
